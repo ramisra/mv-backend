@@ -1,0 +1,30 @@
+# Use an official Python runtime as a base image
+FROM python:3.11
+
+# Set the working directory in the container
+WORKDIR /vidify
+
+# Copy the requirements file into the container at /vidify
+COPY requirements.txt .
+
+# Install any needed packages specified in requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip install --no-cache-dir -r requirements.txt
+
+# Copy the main project related app/core into the container at /vidify
+COPY __init__.py auth_jwks.json ./
+COPY core ./core
+
+# Copy migrations into the container
+COPY alembic ./alembic
+
+# Copy alembic.ini.example and rename to alembic.ini
+COPY alembic.ini.example ./alembic.ini
+
+# Expose the port that Uvicorn listens to
+EXPOSE 8000
+
+# alembic -x db_uri=${DATABASE_URI} upgrade head
+CMD ["alembic", "-x", "db_uri=${DATABASE_URI}", "upgrade", "head"]
+
+# Run Uvicorn when the container launches
+CMD ["python", "-m", "core.asgi"]
